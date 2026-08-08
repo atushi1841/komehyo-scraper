@@ -1,0 +1,31 @@
+{
+  "title": "Komehyo Japan Luxury Resale Scraper",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "keyword": {
+      "title": "Search Keyword",
+      "type": "string",
+      "description": "Search keyword, e.g. ルイヴィトン, シャネル, グッチ",
+      "default": "ルイヴィトン",
+      "minLength": 1,
+      "editor": "textfield"
+    },
+    "maxItems": {
+      "title": "Max Items",
+      "type": "integer",
+      "description": "Maximum number of products to scrape (1-500)",
+      "default": 100,
+      "minimum": 1,
+      "maximum": 500,
+      "editor": "number"
+    },
+    "proxyConfiguration": {
+      "title": "Proxy Configuration",
+      "type": "object",
+      "description": "Optional proxy for production runs. Leave default to use Apify proxy.",
+      "editor": "proxy"
+    }
+  },
+  "required": ["keyword"]
+}
