@@ -18,7 +18,7 @@ This actor uses plain HTTP requests (`httpx`) against Komehyo's server-side rend
 |-------|------|---------|-------------|
 | `keyword` | string | `ルイヴィトン` | Search keyword, e.g. `シャネル`, `グッチ`, `LOUIS VUITTON` |
 | `maxItems` | integer | `100` | Maximum products to scrape, up to `500` |
-| `proxyConfiguration` | object | `{}` | Apify proxy configuration |
+| `proxyConfiguration` | object | `{}` | Apify proxy configuration. Use `useApifyProxy: true` only (auto). Country-specific proxies (`apifyProxyCountry`) return 407 on free plans. |
 
 ## Output Sample
 

@@ -138,21 +138,11 @@ async def fetch_page(client, keyword: str, page: int, headers: dict):
     for attempt in range(3):
         try:
             response = await client.get(url, headers=headers)
-            print(f"[DEBUG] page={page} attempt={attempt} status={response.status_code} size={len(response.text)}", flush=True)
             if response.status_code == 200:
-                html = response.text
-                # デバッグ: HTMLサイズと商品カード数
-                cards_count = len(list(iter_product_cards(html)))
-                print(f"[DEBUG] page={page} cards={cards_count}", flush=True)
-                if cards_count == 0:
-                    # 先頭500文字を出力して何が返っているか確認
-                    preview = re.sub(r'\s+', ' ', html[:500])
-                    print(f"[DEBUG] NO-CARDS preview: {preview[:400]}", flush=True)
-                return html
+                return response.text
             last_error = RuntimeError(f"Unexpected HTTP status {response.status_code}")
         except httpx.HTTPError as exc:
             last_error = exc
-            print(f"[DEBUG] page={page} attempt={attempt} HTTPError: {type(exc).__name__}: {str(exc)[:200]}", flush=True)
 
         await asyncio.sleep(min(2 ** attempt, 8) + random.uniform(0, 1))
 
@@ -169,11 +159,9 @@ async def main():
         # Actor 環境では Apify の入力、ローカルでは stdin を使う。
         # ローカルに apify がインストール済みで get_input() が None を返す場合も stdin にフォールバックする。
         actor_input = await Actor.get_input() if Actor is not None else None
-        print(f"[DEBUG] actor_input: {actor_input}", flush=True)
         if not actor_input:
             raw_input = sys.stdin.read()
             actor_input = json.loads(raw_input) if raw_input.strip() else {}
-            print(f"[DEBUG] fallback stdin: {actor_input}", flush=True)
 
         keyword = str(actor_input.get("keyword") or "").strip()
         if not keyword:
@@ -185,15 +173,12 @@ async def main():
         proxy_url = None
         if Actor is not None:
             proxy_input = actor_input.get("proxyConfiguration")
-            print(f"[DEBUG] proxy_input: {proxy_input}", flush=True)
             if proxy_input:
                 proxy_config = await Actor.create_proxy_configuration(
                     actor_proxy_input=proxy_input
                 )
-                print(f"[DEBUG] proxy_config: {proxy_config}", flush=True)
                 if proxy_config:
                     proxy_url = await proxy_config.new_url()
-                    print(f"[DEBUG] proxy_url: {proxy_url}", flush=True)
 
         headers = {
             "User-Agent": (
@@ -202,31 +187,20 @@ async def main():
                 "Chrome/120.0 Safari/537.36"
             )
         }
-        print(f"[DEBUG] keyword={keyword} max_items={max_items} proxy_url={proxy_url}", flush=True)
 
-        # プロキシ設定(httpx.Proxyオブジェクトで認証を明示的に渡す)
-        transport = None
-        if proxy_url:
-            from urllib.parse import urlparse
-            parsed = urlparse(proxy_url)
-            user = parsed.username
-            password = parsed.password
-            proxy_host = f"{parsed.scheme}://{parsed.hostname}:{parsed.port}"
-            proxy_obj = httpx.Proxy(url=proxy_host, auth=(user, password))
-            transport = httpx.AsyncHTTPTransport(proxy=proxy_obj)
-            print(f"[DEBUG] transport created: {proxy_host} user={user}", flush=True)
-
+        # プロキシ設定(ジャックロードで実証済みのシンプル方式)
+        # 注意: 無料プランでは国指定(apifyProxyCountry)が407になるため、autoのみ推奨
         async with httpx.AsyncClient(
             timeout=30,
             follow_redirects=True,
-            transport=transport,
+            proxy=proxy_url,
             trust_env=False,
         ) as client:
-            print("[DEBUG] client created", flush=True)
             page = 1
             seen_ids = set()
+            collected = 0
 
-            while len(results) < max_items and page <= MAX_PAGES:
+            while collected < max_items and page <= MAX_PAGES:
                 html = await fetch_page(client, keyword, page, headers)
                 cards = list(iter_product_cards(html))
 
@@ -234,7 +208,7 @@ async def main():
                     break
 
                 for segment, product_id in cards:
-                    if len(results) >= max_items:
+                    if collected >= max_items:
                         break
                     if product_id in seen_ids:
                         continue
@@ -248,12 +222,13 @@ async def main():
                         await Actor.push_data(item)
                     else:
                         results.append(item)
+                    collected += 1
 
                 if len(cards) < 50:
                     break
 
                 page += 1
-                if len(results) < max_items and page <= MAX_PAGES:
+                if collected < max_items and page <= MAX_PAGES:
                     await asyncio.sleep(random.uniform(1.0, 3.0))
 
         if Actor is None:
