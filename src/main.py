@@ -167,9 +167,11 @@ async def main():
         # Actor 環境では Apify の入力、ローカルでは stdin を使う。
         # ローカルに apify がインストール済みで get_input() が None を返す場合も stdin にフォールバックする。
         actor_input = await Actor.get_input() if Actor is not None else None
+        print(f"[DEBUG] actor_input: {actor_input}", flush=True)
         if not actor_input:
             raw_input = sys.stdin.read()
             actor_input = json.loads(raw_input) if raw_input.strip() else {}
+            print(f"[DEBUG] fallback stdin: {actor_input}", flush=True)
 
         keyword = str(actor_input.get("keyword") or "").strip()
         if not keyword:
