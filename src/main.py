@@ -208,6 +208,7 @@ async def main():
             timeout=30,
             follow_redirects=True,
             proxy=proxy_url,
+            trust_env=False,
         ) as client:
             print("[DEBUG] client created", flush=True)
             page = 1
