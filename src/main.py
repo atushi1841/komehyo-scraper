@@ -183,7 +183,6 @@ async def main():
         max_items = max(1, min(max_items, 500))
 
         proxy_url = None
-        proxy_auth_header = None
         if Actor is not None:
             proxy_input = actor_input.get("proxyConfiguration")
             print(f"[DEBUG] proxy_input: {proxy_input}", flush=True)
@@ -195,18 +194,6 @@ async def main():
                 if proxy_config:
                     proxy_url = await proxy_config.new_url()
                     print(f"[DEBUG] proxy_url: {proxy_url}", flush=True)
-                    # プロキシ認証ヘッダーを手動構築(httpxの自動認証が効かない場合の回避策)
-                    if "@" in proxy_url:
-                        auth_part, host_part = proxy_url.split("@", 1)
-                        if "://" in auth_part:
-                            auth_part = auth_part.split("://", 1)[1]
-                        import base64
-                        proxy_auth_header = {
-                            "Proxy-Authorization": "Basic " + base64.b64encode(
-                                auth_part.encode("utf-8")
-                            ).decode("utf-8")
-                        }
-                        print(f"[DEBUG] proxy_auth_header set (user={auth_part.split(':',1)[0]})", flush=True)
 
         headers = {
             "User-Agent": (
@@ -215,14 +202,24 @@ async def main():
                 "Chrome/120.0 Safari/537.36"
             )
         }
-        if proxy_auth_header:
-            headers.update(proxy_auth_header)
         print(f"[DEBUG] keyword={keyword} max_items={max_items} proxy_url={proxy_url}", flush=True)
+
+        # プロキシ設定(httpx.Proxyオブジェクトで認証を明示的に渡す)
+        transport = None
+        if proxy_url:
+            from urllib.parse import urlparse
+            parsed = urlparse(proxy_url)
+            user = parsed.username
+            password = parsed.password
+            proxy_host = f"{parsed.scheme}://{parsed.hostname}:{parsed.port}"
+            proxy_obj = httpx.Proxy(url=proxy_host, auth=(user, password))
+            transport = httpx.AsyncHTTPTransport(proxy=proxy_obj)
+            print(f"[DEBUG] transport created: {proxy_host} user={user}", flush=True)
 
         async with httpx.AsyncClient(
             timeout=30,
             follow_redirects=True,
-            proxy=proxy_url,
+            transport=transport,
             trust_env=False,
         ) as client:
             print("[DEBUG] client created", flush=True)
