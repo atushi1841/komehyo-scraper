@@ -139,7 +139,15 @@ async def fetch_page(client, keyword: str, page: int, headers: dict):
         try:
             response = await client.get(url, headers=headers)
             if response.status_code == 200:
-                return response.text
+                html = response.text
+                # デバッグ: HTMLサイズと商品カード数
+                cards_count = len(list(iter_product_cards(html)))
+                print(f"[DEBUG] page={page} status=200 size={len(html)} cards={cards_count}", flush=True)
+                if cards_count == 0:
+                    # 先頭500文字を出力して何が返っているか確認
+                    preview = re.sub(r'\s+', ' ', html[:500])
+                    print(f"[DEBUG] NO-CARDS preview: {preview[:400]}", flush=True)
+                return html
             last_error = RuntimeError(f"Unexpected HTTP status {response.status_code}")
         except httpx.HTTPError as exc:
             last_error = exc
