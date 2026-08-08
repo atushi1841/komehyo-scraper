@@ -138,11 +138,12 @@ async def fetch_page(client, keyword: str, page: int, headers: dict):
     for attempt in range(3):
         try:
             response = await client.get(url, headers=headers)
+            print(f"[DEBUG] page={page} attempt={attempt} status={response.status_code} size={len(response.text)}", flush=True)
             if response.status_code == 200:
                 html = response.text
                 # デバッグ: HTMLサイズと商品カード数
                 cards_count = len(list(iter_product_cards(html)))
-                print(f"[DEBUG] page={page} status=200 size={len(html)} cards={cards_count}", flush=True)
+                print(f"[DEBUG] page={page} cards={cards_count}", flush=True)
                 if cards_count == 0:
                     # 先頭500文字を出力して何が返っているか確認
                     preview = re.sub(r'\s+', ' ', html[:500])
@@ -151,6 +152,7 @@ async def fetch_page(client, keyword: str, page: int, headers: dict):
             last_error = RuntimeError(f"Unexpected HTTP status {response.status_code}")
         except httpx.HTTPError as exc:
             last_error = exc
+            print(f"[DEBUG] page={page} attempt={attempt} HTTPError: {type(exc).__name__}: {str(exc)[:200]}", flush=True)
 
         await asyncio.sleep(min(2 ** attempt, 8) + random.uniform(0, 1))
 
