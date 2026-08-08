@@ -183,13 +183,15 @@ async def main():
         proxy_url = None
         if Actor is not None:
             proxy_input = actor_input.get("proxyConfiguration")
+            print(f"[DEBUG] proxy_input: {proxy_input}", flush=True)
             if proxy_input:
-                # 重要: 引数名は actor_proxy_input= を使うこと。
                 proxy_config = await Actor.create_proxy_configuration(
                     actor_proxy_input=proxy_input
                 )
+                print(f"[DEBUG] proxy_config: {proxy_config}", flush=True)
                 if proxy_config:
                     proxy_url = await proxy_config.new_url()
+                    print(f"[DEBUG] proxy_url: {proxy_url}", flush=True)
 
         headers = {
             "User-Agent": (
@@ -198,12 +200,14 @@ async def main():
                 "Chrome/120.0 Safari/537.36"
             )
         }
+        print(f"[DEBUG] keyword={keyword} max_items={max_items} proxy_url={proxy_url}", flush=True)
 
         async with httpx.AsyncClient(
             timeout=30,
             follow_redirects=True,
             proxy=proxy_url,
         ) as client:
+            print("[DEBUG] client created", flush=True)
             page = 1
             seen_ids = set()
 
