@@ -22,3 +22,31 @@ This actor uses plain HTTP requests (`httpx`) against Komehyo's server-side rend
 
 ## Output Sample
 
+```json
+{
+  "productId": "260-008-023-3589",
+  "title": "ルイヴィトン (ソフィアコッポラ&ルイヴィトン) スリムクラッチ M95861 バッグ",
+  "brand": "LOUIS VUITTON",
+  "price": 75000,
+  "referencePrice": null,
+  "rank": "中古品A",
+  "size": null,
+  "material": null,
+  "store": "KOMEHYO SHIBUYA",
+  "imageUrl": "https://img.komehyo.jp/contents/images/goods/840/2600080233589_1_icon.jpg",
+  "productUrl": "https://komehyo.jp/product/260-008-023-3589/",
+  "scrapedAt": "2026-08-10T10:02:44Z"
+}
+```
+
+## Use Cases
+
+- **Luxury resale arbitrage** — find underpriced bags/watches before others
+- **Price monitoring** — track Louis Vuitton, Chanel, Rolex market prices
+- **Cross-border resale research** — Japan luxury market trends
+
+## Integrations
+
+Works with Apify [Connectors](https://apify.com/integrations) — push results to Slack, Google Sheets, Notion, or Supabase with one click. Trigger on a [Schedule](https://apify.com/docs/schedules) for daily price tracking.
+
+> 💡 **For cross-shop comparison**, use the [Japan Luxury Brand Market Scraper](https://apify.com/fruitful_quintessence/japan-luxury-brand-market-scraper) — it compares Komehyo categories against Jackroad watches in a single dataset.
