@@ -7,9 +7,9 @@
       "title": "Search Keyword",
       "type": "string",
       "description": "Search keyword, e.g. ルイヴィトン, シャネル, グッチ",
-      "default": "ルイヴィトン",
       "minLength": 1,
-      "editor": "textfield"
+      "editor": "textfield",
+      "prefill": "ルイヴィトン"
     },
     "maxItems": {
       "title": "Max Items",
@@ -27,5 +27,7 @@
       "editor": "proxy"
     }
   },
-  "required": ["keyword"]
+  "required": [
+    "keyword"
+  ]
 }
